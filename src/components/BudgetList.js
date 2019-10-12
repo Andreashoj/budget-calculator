@@ -1,92 +1,39 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import { ListContext } from "../contexts/ListContext";
-import { TransitionGroup, CSSTransition } from "react-transition-group";
+import ListItem from "./ListItem";
+import ListItemEdit from "./ListItemEdit";
+import { animated, useTransition } from "react-spring";
 
 const BudgetList = () => {
-  const { budgetItems, RemoveItem, EditItem, SaveItem } = useContext(
-    ListContext
+  const { budgetItems } = useContext(ListContext);
+
+  const transitions = useTransition(
+    budgetItems,
+    budgetItems.map(item => item.id),
+    {
+      from: { opacity: 0 },
+      enter: { opacity: 1 },
+      leave: { opacity: 0 }
+    }
   );
-
-  const [itemName, setItemName] = useState();
-  const [itemValue, setItemValue] = useState();
-
-  const handleSubmit = (e, id) => {
-    e.preventDefault();
-    SaveItem(itemName, itemValue, id);
-    setItemName("");
-    setItemValue("");
-  };
 
   return (
     <ul className="list-ul">
-      <TransitionGroup>
-        {budgetItems.map(item => {
-          if (!item.editMode) {
-            return (
-              <CSSTransition key={item.id} timeout={500} classNames="item">
-                <li key={item.id} className="list-li">
-                  <div>{item.name}</div>
-                  <div>{item.value}$</div>
-                  <div>
-                    <button
-                      className="edit-button"
-                      onClick={() => EditItem(item.id)}
-                    >
-                      edit
-                    </button>
-                    <button
-                      className="remove-button "
-                      onClick={() => {
-                        RemoveItem(item.id);
-                      }}
-                    >
-                      x
-                    </button>
-                  </div>
-                </li>
-              </CSSTransition>
-            );
-          } else {
-            return (
-              <ul className="list-ul-edit">
-                <CSSTransition key={item.id} timeout={500} classNames="item">
-                  <li className="list-li-edit" key={item.id}>
-                    <form onSubmit={e => handleSubmit(e, item.id)}>
-                      <input
-                        type="text"
-                        name="editItemName"
-                        onChange={e => setItemName(e.target.value)}
-                        value={itemName}
-                        placeholder="New item"
-                        required
-                      />
-                      <input
-                        type="number"
-                        name="editItemValue"
-                        onChange={e => setItemValue(parseInt(e.target.value))}
-                        value={itemValue}
-                        placeholder="New value"
-                        required
-                      />
-                      <div>
-                        <button type="submit" className="edit-button">
-                          SAVE
-                        </button>
-                        <button
-                          className="remove-button"
-                          onClick={() => RemoveItem(item.id)}
-                        >
-                          x
-                        </button>
-                      </div>
-                    </form>
-                  </li>
-                </CSSTransition>
-              </ul>
-            );
-          }
-        })}
-      </TransitionGroup>
+      {transitions.map(({ item, key, props }) => {
+        if (!item.editMode) {
+          return (
+            <animated.div key={key} style={props}>
+              <ListItem item={item} />
+            </animated.div>
+          );
+        } else {
+          return (
+            <animated.div key={key} style={props}>
+              <ListItemEdit item={item} />
+            </animated.div>
+          );
+        }
+      })}
     </ul>
   );
 };
